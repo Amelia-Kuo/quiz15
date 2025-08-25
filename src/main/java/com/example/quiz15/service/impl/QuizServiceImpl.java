@@ -19,6 +19,7 @@ import com.example.quiz15.vo.QuestionVo;
 import com.example.quiz15.vo.QuestionsRes;
 import com.example.quiz15.vo.QuizCreateReq;
 import com.example.quiz15.vo.QuizUpdateReq;
+import com.example.quiz15.vo.SearchReq;
 import com.example.quiz15.vo.SearchRes;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -201,11 +202,11 @@ public class QuizServiceImpl implements QuizService {
 
 	@Override
 	public QuestionsRes getQuizsByQuizId(int quizId) {
-		if(quizId <= 1) {
+		if (quizId <= 1) {
 			return new QuestionsRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(), //
 					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
 		}
-		
+
 		List<QuestionVo> questionVoList = new ArrayList<>();
 		List<Question> list = questionDao.getQuestionsByQuizId(quizId);
 		// 把選項的資料型態從 String 轉換成 List<String>
@@ -216,7 +217,8 @@ public class QuizServiceImpl implements QuizService {
 				});
 				// 將從DB取得的每一筆資料(Question item) 的每個欄位值放到 QuestionVo 中，以便返回給使用者
 				// Question 和 QuestionsVo 差別在於選項的資料型態
-				QuestionVo vo = new QuestionVo(item.getQuizId(), item.getQuestionId(), item.getQuestion(), item.getType(), item.isRequired(),optionsList);
+				QuestionVo vo = new QuestionVo(item.getQuizId(), item.getQuestionId(), item.getQuestion(),
+						item.getType(), item.isRequired(), optionsList);
 				// 把每個 vo 放到 questionVoList 當中
 				questionVoList.add(vo);
 			} catch (Exception e) {
@@ -226,7 +228,35 @@ public class QuizServiceImpl implements QuizService {
 			}
 		}
 		return new QuestionsRes(ResCodeMessage.OPTIONS_TRANSFER_ERROR.getStatuscode(), //
-				ResCodeMessage.OPTIONS_TRANSFER_ERROR.getMassage(),questionVoList);
+				ResCodeMessage.OPTIONS_TRANSFER_ERROR.getMassage(), questionVoList);
+	}
+
+	@Override
+	public SearchRes Search(SearchReq searchReq) {
+		// 轉換 searchReq 的值
+		// 若 quizName 是 null ,轉成空字串
+		String quizName = searchReq.getQuizName();
+		if (quizName == null) {
+			quizName = "";
+		} else { // else是多餘的不需要寫,可以轉換成下列的三元運算子
+			quizName = quizName;
+		}
+
+//		// 三元運算子
+//		// 格式: 變數名稱 = 條件判斷式 ? 判斷結果為true時賦予的值 : 判斷結果為false時賦予的值
+//		quizName = quizName == null ? "" : quizName;
+//		// 上面if else 條件式可轉換成一行
+//		String quizName = searchReq.getQuizName() == null ? "" : searchReq.getQuizName();
+		// =============================================================================//
+		// 轉換開始時間 => 若沒有開始日期就給定一個最早的時間
+		LocalDateTime startDate = searchReq.getStartDate() == null ? LocalDateTime.of(1970, 1, 1, 0, 0)
+				: searchReq.getStartDate();
+		// 轉換結束時間 => 若沒有結束日期就給定一個最晚的時間
+		LocalDateTime endDate = searchReq.getStartDate() == null ? LocalDateTime.of(9999, 12, 31, 23, 59)
+				: searchReq.getStartDate();
+		List<Quiz> list = quizDao.getAll(quizName, startDate, endDate);
+		return new SearchRes(ResCodeMessage.SUCCESS.getStatuscode(), //
+					ResCodeMessage.SUCCESS.getMassage(),list);
 	}
 
 }

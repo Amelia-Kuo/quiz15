@@ -13,6 +13,7 @@ import com.example.quiz15.vo.BasicRes;
 import com.example.quiz15.vo.QuestionsRes;
 import com.example.quiz15.vo.QuizCreateReq;
 import com.example.quiz15.vo.QuizUpdateReq;
+import com.example.quiz15.vo.SearchReq;
 import com.example.quiz15.vo.SearchRes;
 
 import jakarta.validation.Valid;
@@ -45,4 +46,8 @@ public class QuizServiceController {
 		return quizService.getQuizsByQuizId(quizId);
 	}
 
+	@PostMapping(value = "quiz/search")
+	public SearchRes Search(@RequestBody SearchReq searchReq) {
+		return quizService.Search(searchReq);
+	}
 }
