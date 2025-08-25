@@ -40,4 +40,14 @@ public interface QuizDao extends JpaRepository<Quiz, Integer>{
 	
 	@Query(value = "select * from quiz where title like %?1% and start_Date >= ?2 and end_Date <= ?3",nativeQuery = true)
 	public List<Quiz> getAll(String title, LocalDateTime startDate, LocalDateTime endDate); 
+	
+	@Query(value = "select * from quiz where title like %?1% and start_Date >= ?2 and end_Date <= ?3 and is_publishe = true",nativeQuery = true)
+	public List<Quiz> getAllPublished(String title, LocalDateTime startDate, LocalDateTime endDate); 
+	
+	@Transactional
+	@Modifying
+	@Query(value = "delete from quiz where id = ?1",nativeQuery = true)
+	public void deleteById(int id);
+	
+	
 }

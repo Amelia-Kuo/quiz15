@@ -9,6 +9,8 @@ public class SearchReq {
 	private LocalDateTime startDate;
 
 	private LocalDateTime endDate;
+	
+	private boolean published;
 
 	public String getQuizName() {
 		return quizName;
@@ -34,4 +36,13 @@ public class SearchReq {
 		this.endDate = endDate;
 	}
 
+	public boolean isPublished() {
+		return published;
+	}
+
+	public void setPublished(boolean published) {
+		this.published = published;
+	}
+	
+	
 }

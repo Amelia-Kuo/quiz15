@@ -232,7 +232,7 @@ public class QuizServiceImpl implements QuizService {
 	}
 
 	@Override
-	public SearchRes Search(SearchReq searchReq) {
+	public SearchRes search(SearchReq searchReq) {
 		// 轉換 searchReq 的值
 		// 若 quizName 是 null ,轉成空字串
 		String quizName = searchReq.getQuizName();
@@ -254,9 +254,30 @@ public class QuizServiceImpl implements QuizService {
 		// 轉換結束時間 => 若沒有結束日期就給定一個最晚的時間
 		LocalDateTime endDate = searchReq.getStartDate() == null ? LocalDateTime.of(9999, 12, 31, 23, 59)
 				: searchReq.getStartDate();
-		List<Quiz> list = quizDao.getAll(quizName, startDate, endDate);
+		List<Quiz> list = new ArrayList<>();
+		if(searchReq.isPublished()) {
+			list = quizDao.getAllPublished(quizName, startDate, endDate);
+		}else {
+			list = quizDao.getAll(quizName, startDate, endDate);
+		}
 		return new SearchRes(ResCodeMessage.SUCCESS.getStatuscode(), //
-					ResCodeMessage.SUCCESS.getMassage(),list);
+				ResCodeMessage.SUCCESS.getMassage(), list);
+	}
+
+	@Transactional(rollbackOn = Exception.class)
+	@Override
+	public BasicRes delete(int quizId) throws Exception {
+		if (quizId <= 0) {
+			return new BasicRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(),
+					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
+		}
+		try {
+			quizDao.deleteById(quizId);
+			questionDao.deleteByQuizID(quizId);
+		} catch (Exception e) {
+			throw e;
+		}
+		return null;
 	}
 
 }

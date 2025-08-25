@@ -27,4 +27,5 @@ public interface QuestionDao extends JpaRepository<Question, QuestionId>{
 	
 	@Query(value = "select * from question where quiz_id = ?1",nativeQuery = true)
 	public List<Question> getQuestionsByQuizId(int quizId);
-}
+	
+	}
