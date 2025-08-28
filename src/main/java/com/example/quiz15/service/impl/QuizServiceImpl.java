@@ -2,19 +2,24 @@ package com.example.quiz15.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.quiz15.constants.QuestionType;
 import com.example.quiz15.constants.ResCodeMessage;
+import com.example.quiz15.dao.FillinDao;
 import com.example.quiz15.dao.QuestionDao;
 import com.example.quiz15.dao.QuizDao;
 import com.example.quiz15.entity.Question;
 import com.example.quiz15.entity.Quiz;
 import com.example.quiz15.service.ifs.QuizService;
 import com.example.quiz15.vo.BasicRes;
+import com.example.quiz15.vo.FillinReq;
+import com.example.quiz15.vo.QuestionAnswerVo;
 import com.example.quiz15.vo.QuestionVo;
 import com.example.quiz15.vo.QuestionsRes;
 import com.example.quiz15.vo.QuizCreateReq;
@@ -37,6 +42,9 @@ public class QuizServiceImpl implements QuizService {
 
 	@Autowired
 	private QuestionDao questionDao;
+	
+	@Autowired
+	private FillinDao fillinDao;
 
 	/**
 	 * @throws Exception
@@ -138,7 +146,18 @@ public class QuizServiceImpl implements QuizService {
 //		return new BasicRes(//
 //				ResCodeMessage.SUCCESS.getStatuscode(), //
 //				ResCodeMessage.SUCCESS.getMassage());
-	};
+	}
+
+	private BasicRes checkStatus(LocalDateTime startDate, boolean isPublished) {
+		// 問卷允許修改的狀態 1.尚未發佈 2.已發佈+尚未開始
+		if (!isPublished || startDate.isAfter(LocalDateTime.now())) {
+			// 返回成功表示問卷允許被修改
+			return new BasicRes(ResCodeMessage.SUCCESS.getStatuscode(), //
+					ResCodeMessage.SUCCESS.getMassage());
+		}
+		return new BasicRes(ResCodeMessage.QUIZ_CANNOT_BE_EDITED.getStatuscode(), //
+				ResCodeMessage.QUIZ_CANNOT_BE_EDITED.getMassage());
+	}
 
 // 修改問卷
 	@Transactional(rollbackOn = Exception.class)
@@ -149,9 +168,10 @@ public class QuizServiceImpl implements QuizService {
 		// 更新是對已存在的問卷進行修改
 		try {
 			// 1. 檢查QuizId是否存在
-			int count = quizDao.getCountByQuizId(quizUpdateReq.getQuizId());
+			// int count = quizDao.getCountByQuizId(quizUpdateReq.getQuizId());
 			int quizId = quizUpdateReq.getQuizId();
-			if (count != 1) {
+			Quiz quiz = quizDao.getById(quizId);
+			if (quiz == null) {
 				return new BasicRes(ResCodeMessage.NOT_FOUND.getStatuscode(), //
 						ResCodeMessage.NOT_FOUND.getMassage());
 			}
@@ -160,7 +180,12 @@ public class QuizServiceImpl implements QuizService {
 			if (checkRes != null) {
 				return checkRes;
 			}
-			// 3. 更新問卷
+			// 3. 檢查問卷狀態是否可以被更新
+			checkRes = checkStatus(quizUpdateReq.getStartDate(), quizUpdateReq.isPublished());
+			if (checkRes.getStatuscode() != 200) {
+				return checkRes;
+			}
+			// 4. 更新問卷
 			int updateRes = quizDao.update(quizId, quizUpdateReq.getTitle(), quizUpdateReq.getDescription(), //
 					quizUpdateReq.getStartDate(), quizUpdateReq.getEndDate(), quizUpdateReq.isPublished());
 			if (updateRes != 1) {
@@ -168,9 +193,9 @@ public class QuizServiceImpl implements QuizService {
 				return new BasicRes(ResCodeMessage.QUIZ_UPDATE_FAILED.getStatuscode(), //
 						ResCodeMessage.QUIZ_UPDATE_FAILED.getMassage());
 			}
-			// 4. 刪除同一張問卷的所有問題
+			// 5. 刪除同一張問卷的所有問題
 			questionDao.deleteByQuizID(quizId);
-			// 5. 檢查問題
+			// 6. 檢查問題
 			List<QuestionVo> questionVoList = quizUpdateReq.getQuestionList();
 			for (QuestionVo vo : questionVoList) {
 				checkRes = checkQuestionType(vo);
@@ -255,9 +280,9 @@ public class QuizServiceImpl implements QuizService {
 		LocalDateTime endDate = searchReq.getStartDate() == null ? LocalDateTime.of(9999, 12, 31, 23, 59)
 				: searchReq.getStartDate();
 		List<Quiz> list = new ArrayList<>();
-		if(searchReq.isPublished()) {
+		if (searchReq.isPublished()) {
 			list = quizDao.getAllPublished(quizName, startDate, endDate);
-		}else {
+		} else {
 			list = quizDao.getAll(quizName, startDate, endDate);
 		}
 		return new SearchRes(ResCodeMessage.SUCCESS.getStatuscode(), //
@@ -271,12 +296,150 @@ public class QuizServiceImpl implements QuizService {
 			return new BasicRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(),
 					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
 		}
+		Quiz quiz = quizDao.getById(quizId);
+		if (quiz == null) { // 要判斷是否為null,若不判斷且取得的值是null時,後續使用方法會報錯
+			return new BasicRes(ResCodeMessage.NOT_FOUND.getStatuscode(), ResCodeMessage.NOT_FOUND.getMassage());
+		}
+		// 3. 檢查問卷狀態是否可以被更新
+		BasicRes checkRes = checkStatus(quiz.getStartDate(), quiz.isPublished());
+		if (checkRes.getStatuscode() != 200) {
+			return checkRes;
+		}
 		try {
 			quizDao.deleteById(quizId);
 			questionDao.deleteByQuizID(quizId);
 		} catch (Exception e) {
 			throw e;
 		}
+		return null;
+	}
+
+	@Override
+	public BasicRes fillin(FillinReq fillinReq) throws Exception {
+		// 檢查填寫的問卷(quiz)
+		// 檢查 1.是否已發佈 2.當下填寫的日期是否超過開放時間(當日是否介於開始與結束時間之間)
+		int count = quizDao.selectCountById(fillinReq.getQuizId(), LocalDateTime.now());
+		if (count != 1) {
+			return new BasicRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(), //
+					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
+		}
+		// 檢查題目
+		// 檢查 1.必填不得為空白 2.單選不能多個答案 3.答案與選項一致
+		// 取得一張問卷的所有題目
+		List<Question> questionList = questionDao.getQuestionsByQuizId(fillinReq.getQuizId());
+		List<QuestionAnswerVo> QuestionAnswerVoList = fillinReq.getQuestionAnswerVoList();
+		// 將問題編號和回答轉換成 Map,就是將 QuestionAnswerVo 中的屬性轉換成 Map
+		Map<Integer, List<String>> answerMap = new HashMap<>();
+		for (QuestionAnswerVo vo : QuestionAnswerVoList) {
+			answerMap.put(vo.getQuestionId(), vo.getAnswerList());
+		}
+		// 檢查每一題
+		for (Question question : questionList) {
+			int questionId = question.getQuestionId();
+			String type = question.getType();
+			boolean required = question.isRequired();
+			// 1.檢查必填但沒有答案 => 必填且 answerMap 的 key 中沒有 questionId
+			if (required && !answerMap.containsKey(questionId)) {
+				return new BasicRes(ResCodeMessage.ANSWER_REQUIRED.getStatuscode(), //
+						ResCodeMessage.ANSWER_REQUIRED.getMassage());
+			}
+			// 2.單選但有多個答案
+			if (type.equalsIgnoreCase(QuestionType.SINGLE_CHOICE.getType())) {
+				List<String> answerList = answerMap.get(questionId);
+				if (answerList.size() > 1) {
+					return new BasicRes(ResCodeMessage.QUESTION_TYPE_IS_SINGLE.getStatuscode(), //
+							ResCodeMessage.QUESTION_TYPE_IS_SINGLE.getMassage());
+				}
+			}
+			// 簡答題沒有選項,跳過檢查3
+			if(type.equalsIgnoreCase(QuestionType.TEXT_QUESTION.getType())) {
+				continue;
+			}
+			// 3.比對該題答案要和題目選項是否一樣(答案必須包含在選項裡)
+			String optionsStr = question.getOptions();
+			List<String> answerList = answerMap.get(questionId);
+			for (String answer : answerList) {
+				// 將每個答案比對是否被包含在選項字串中
+				if (!optionsStr.contains(answer)) {
+					return new BasicRes(ResCodeMessage.OPTION_ANSWER_MISMATCH.getStatuscode(), //
+							ResCodeMessage.OPTION_ANSWER_MISMATCH.getMassage());
+				}
+			}
+		}
+		// 存資料: 一個題目存成一筆資料
+		for(QuestionAnswerVo vo : QuestionAnswerVoList) {
+			// 把answerList轉成字串
+			try {
+				String str = mapper.writeValueAsString(vo.getAnswerList());
+				fillinDao.insert(fillinReq.getQuizId(), vo.getQuestionId(), fillinReq.getEmail(), str, LocalDateTime.now());
+			} catch (Exception e) {
+				throw e;
+			}
+		}
+		return new BasicRes(ResCodeMessage.SUCCESS.getStatuscode(), //
+				ResCodeMessage.SUCCESS.getMassage());
+	}
+	
+	
+	
+	
+	
+
+	public BasicRes fillin_Test(FillinReq fillinReq) {
+		// 檢查填寫的問卷(quiz)
+		// 檢查 1.是否已發佈 2.當下填寫的日期是否超過開放時間(當日是否介於開始與結束時間之間)
+		int count = quizDao.selectCountById(fillinReq.getQuizId(), LocalDateTime.now());
+		if (count != 1) {
+			return new BasicRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(), //
+					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
+		}
+		// 檢查題目
+		// 檢查 1.必填不得為空白 2.單選不能多個答案 3.答案與選項一致
+		// 取得一張問卷的所有題目
+		List<Question> questionList = questionDao.getQuestionsByQuizId(fillinReq.getQuizId());
+		List<QuestionAnswerVo> QuestionAnswerVoList = fillinReq.getQuestionAnswerVoList();
+		// QuestionAnswerVoList 中非必填可能沒作答,因此 size 可能比 questionList 少
+		// 要知道每題是否必填及問題型態,才能拿填寫的答案比對 => 因此 questionList 要做比較的基底放在外層迴圈
+
+		// 先把必填的questionId 放入 List中
+		List<Integer> questionIdList = new ArrayList<>();
+		for (Question question : questionList) {
+			if (question.isRequired()) {
+				questionIdList.add(question.getQuestionId());
+			}
+
+		}
+
+		for (Question question : questionList) {
+			int questionId = question.getQuestionId();
+			String type = question.getType();
+			boolean required = question.isRequired();
+			// 該題必填 => 檢查 QuestionAnswerVoList 中有沒有該筆存在
+			for (QuestionAnswerVo vo : QuestionAnswerVoList) {
+				int voQuestionId = vo.getQuestionId();
+				// 該題必填但題目編號不包含在questionOdList => 回傳錯誤
+				if (required && !questionIdList.contains(voQuestionId)) {
+					return new BasicRes(ResCodeMessage.ANSWER_REQUIRED.getStatuscode(), //
+							ResCodeMessage.ANSWER_REQUIRED.getMassage());
+				}
+
+				List<String> answerList = vo.getAnswerList();
+				// 檢查相同的 questionId，該題必填且空白 => 回傳錯誤
+				// CollectionUtils.isEmpty 有判斷 null
+				// QuestionAnswerVo 中 answerList 有給定新的值,沒有 mapping 到會是一個空的List
+				if (questionId == voQuestionId && required && answerList.isEmpty()) {
+					return new BasicRes(ResCodeMessage.ANSWER_REQUIRED.getStatuscode(), //
+							ResCodeMessage.ANSWER_REQUIRED.getMassage());
+				}
+				// 檢查相同的 questionId，單選但多個答案 => 回傳錯誤
+				if (questionId == voQuestionId && type == QuestionType.SINGLE_CHOICE.getType()
+						&& answerList.size() > 1) {
+					return new BasicRes(ResCodeMessage.QUESTION_TYPE_IS_SINGLE.getStatuscode(), //
+							ResCodeMessage.QUESTION_TYPE_IS_SINGLE.getMassage());
+				}
+			}
+		}
+
 		return null;
 	}
 

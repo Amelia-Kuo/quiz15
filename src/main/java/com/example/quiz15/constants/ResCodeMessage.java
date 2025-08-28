@@ -14,8 +14,14 @@ public enum ResCodeMessage {
 	OPTIONS_INSUFFICIENT(400,"Options Insufficient!"),//
 	TEXT_HAS_OPTIONS_ERROR(400,"Text Has Options Error!"),//
 	OPTIONS_TRANSFER_ERROR(400,"Options Transfer Error!"),
-	QUIZ_ID_ERROR(400,"Quiz ID Error!");
+	QUIZ_ID_ERROR(400,"Quiz ID Error!"),//
+	QUIZ_CANNOT_BE_EDITED(400,"Quiz CANNOT be Edited!"),//
+	ANSWER_REQUIRED(400,"Answer Required."),//
+	QUESTION_TYPE_IS_SINGLE(400,"Question Type is Single!!"),
+	OPTION_ANSWER_MISMATCH(400,"Option Answer Mismatch!");
 
+	
+	
 	private int statuscode;
 
 	private String massage;

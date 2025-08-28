@@ -34,15 +34,8 @@ public class User {
 	private int age;
 	
 	@Column(name = "is_admin")
-	private boolean isAdmin;
+	private boolean Admin;
 	
-	public boolean isAdmin() {
-		return isAdmin;
-	}
-
-	public void setAdmin(boolean isAdmin) {
-		this.isAdmin = isAdmin;
-	}
 
 	@NotBlank(message = ConstantsMessage.PASSWORD_ERROR)
 	@Column(name = "password")
@@ -88,4 +81,13 @@ public class User {
 		this.password = password;
 	}
 
+	public boolean isAdmin() {
+		return Admin;
+	}
+
+	public void setAdmin(boolean admin) {
+		Admin = admin;
+	}
+
+	
 }

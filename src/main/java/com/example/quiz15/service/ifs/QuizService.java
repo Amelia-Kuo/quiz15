@@ -1,6 +1,7 @@
 package com.example.quiz15.service.ifs;
 
 import com.example.quiz15.vo.BasicRes;
+import com.example.quiz15.vo.FillinReq;
 import com.example.quiz15.vo.QuestionsRes;
 import com.example.quiz15.vo.QuizCreateReq;
 import com.example.quiz15.vo.QuizUpdateReq;
@@ -20,4 +21,6 @@ public interface QuizService {
 	public SearchRes search(SearchReq searchReq);
 	
 	public BasicRes delete(int quizId) throws Exception;
+	
+	public BasicRes fillin(FillinReq fillinReq) throws Exception;
 }

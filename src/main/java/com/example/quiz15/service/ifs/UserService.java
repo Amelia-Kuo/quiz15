@@ -10,6 +10,4 @@ public interface UserService {
 	
 	public BasicRes login(LoginReq loginReq);
 
-
-
 }

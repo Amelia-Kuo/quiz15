@@ -51,7 +51,7 @@ public class UserServiceImpl implements UserService {
 	public BasicRes login(LoginReq loginReq) {
 		// 確認Email是否存在資料庫
 		User user = userDao.getByEmail(loginReq.getEmail());
-		// 透過 email 去得一筆資料, email 不存在會得到 null
+		// 透過 email 取得一筆資料, email 不存在會得到 null
 		if (user == null) {
 			return new BasicRes(//
 					ResCodeMessage.NOT_FOUND.getStatuscode(), //

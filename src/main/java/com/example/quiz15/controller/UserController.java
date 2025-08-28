@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.quiz15.vo.AddInfoReq;
 import com.example.quiz15.service.ifs.UserService;
+import com.example.quiz15.vo.AddInfoReq;
 import com.example.quiz15.vo.BasicRes;
 import com.example.quiz15.vo.LoginReq;
 
@@ -34,4 +34,6 @@ public class UserController {
 		return userService.login(loginReq);
 		
 	}
+	
+	
 }
