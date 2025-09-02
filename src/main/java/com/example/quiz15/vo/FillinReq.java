@@ -17,7 +17,7 @@ public class FillinReq {
 	private String email;
 	
 	@Valid // 有檢查 Vo 中的 QuestionId 所以要加上 @Valid 使其生效
-	private List<QuestionAnswerVo> QuestionAnswerVoList;
+	private List<QuestionIdAnswerVo> QuestionAnswerVoList;
 
 	public int getQuizId() {
 		return quizId;
@@ -35,11 +35,11 @@ public class FillinReq {
 		this.email = email;
 	}
 
-	public List<QuestionAnswerVo> getQuestionAnswerVoList() {
+	public List<QuestionIdAnswerVo> getQuestionAnswerVoList() {
 		return QuestionAnswerVoList;
 	}
 
-	public void setQuestionAnswerVoList(List<QuestionAnswerVo> questionAnswerVoList) {
+	public void setQuestionAnswerVoList(List<QuestionIdAnswerVo> questionAnswerVoList) {
 		QuestionAnswerVoList = questionAnswerVoList;
 	}
 

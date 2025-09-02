@@ -1,18 +1,29 @@
 package com.example.quiz15.vo;
 
-import java.util.List;
-
-public class QuestionAnswerVo {
+public class QuestionAnswerDto {
 
 	private int questionId;
-	
+
 	private String question;
-	
+
 	private String type;
-	
+
 	private boolean required;
+
+	private String answerStr;
+
+	public QuestionAnswerDto() {
+		super();
+	}
 	
-	private List<String> answerList;
+	public QuestionAnswerDto(int questionId, String question, String type, boolean required, String answerStr) {
+		super();
+		this.questionId = questionId;
+		this.question = question;
+		this.type = type;
+		this.required = required;
+		this.answerStr = answerStr;
+	}
 
 	public int getQuestionId() {
 		return questionId;
@@ -46,13 +57,12 @@ public class QuestionAnswerVo {
 		this.required = required;
 	}
 
-	public List<String> getAnswerList() {
-		return answerList;
+	public String getAnswerStr() {
+		return answerStr;
 	}
 
-	public void setAnswerList(List<String> answerList) {
-		this.answerList = answerList;
+	public void setAnswerStr(String answerStr) {
+		this.answerStr = answerStr;
 	}
-	
-	
+
 }

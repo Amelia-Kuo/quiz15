@@ -18,7 +18,9 @@ public enum ResCodeMessage {
 	QUIZ_CANNOT_BE_EDITED(400,"Quiz CANNOT be Edited!"),//
 	ANSWER_REQUIRED(400,"Answer Required."),//
 	QUESTION_TYPE_IS_SINGLE(400,"Question Type is Single!!"),
-	OPTION_ANSWER_MISMATCH(400,"Option Answer Mismatch!");
+	OPTION_ANSWER_MISMATCH(400,"Option Answer Mismatch!"),
+	EMAIL_DUPLICATED(400,"Email Duplicate!"),//
+	NO_ADMIN_ACCESS(401,"No Administrator Access!");
 
 	
 	

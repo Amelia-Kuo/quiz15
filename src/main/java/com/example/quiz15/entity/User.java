@@ -34,7 +34,7 @@ public class User {
 	private int age;
 	
 	@Column(name = "is_admin")
-	private boolean Admin;
+	private boolean admin;
 	
 
 	@NotBlank(message = ConstantsMessage.PASSWORD_ERROR)
@@ -82,12 +82,14 @@ public class User {
 	}
 
 	public boolean isAdmin() {
-		return Admin;
+		return admin;
 	}
 
 	public void setAdmin(boolean admin) {
-		Admin = admin;
+		this.admin = admin;
 	}
+
+	
 
 	
 }

@@ -18,14 +18,17 @@ import com.example.quiz15.entity.Question;
 import com.example.quiz15.entity.Quiz;
 import com.example.quiz15.service.ifs.QuizService;
 import com.example.quiz15.vo.BasicRes;
+import com.example.quiz15.vo.FeedbackRes;
+import com.example.quiz15.vo.FeedbakcUserRes;
 import com.example.quiz15.vo.FillinReq;
-import com.example.quiz15.vo.QuestionAnswerVo;
+import com.example.quiz15.vo.QuestionIdAnswerVo;
 import com.example.quiz15.vo.QuestionVo;
 import com.example.quiz15.vo.QuestionsRes;
 import com.example.quiz15.vo.QuizCreateReq;
 import com.example.quiz15.vo.QuizUpdateReq;
 import com.example.quiz15.vo.SearchReq;
 import com.example.quiz15.vo.SearchRes;
+import com.example.quiz15.vo.UserVo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -327,10 +330,10 @@ public class QuizServiceImpl implements QuizService {
 		// 檢查 1.必填不得為空白 2.單選不能多個答案 3.答案與選項一致
 		// 取得一張問卷的所有題目
 		List<Question> questionList = questionDao.getQuestionsByQuizId(fillinReq.getQuizId());
-		List<QuestionAnswerVo> QuestionAnswerVoList = fillinReq.getQuestionAnswerVoList();
+		List<QuestionIdAnswerVo> QuestionAnswerVoList = fillinReq.getQuestionAnswerVoList();
 		// 將問題編號和回答轉換成 Map,就是將 QuestionAnswerVo 中的屬性轉換成 Map
 		Map<Integer, List<String>> answerMap = new HashMap<>();
-		for (QuestionAnswerVo vo : QuestionAnswerVoList) {
+		for (QuestionIdAnswerVo vo : QuestionAnswerVoList) {
 			answerMap.put(vo.getQuestionId(), vo.getAnswerList());
 		}
 		// 檢查每一題
@@ -367,7 +370,7 @@ public class QuizServiceImpl implements QuizService {
 			}
 		}
 		// 存資料: 一個題目存成一筆資料
-		for(QuestionAnswerVo vo : QuestionAnswerVoList) {
+		for(QuestionIdAnswerVo vo : QuestionAnswerVoList) {
 			// 把answerList轉成字串
 			try {
 				String str = mapper.writeValueAsString(vo.getAnswerList());
@@ -397,7 +400,7 @@ public class QuizServiceImpl implements QuizService {
 		// 檢查 1.必填不得為空白 2.單選不能多個答案 3.答案與選項一致
 		// 取得一張問卷的所有題目
 		List<Question> questionList = questionDao.getQuestionsByQuizId(fillinReq.getQuizId());
-		List<QuestionAnswerVo> QuestionAnswerVoList = fillinReq.getQuestionAnswerVoList();
+		List<QuestionIdAnswerVo> QuestionAnswerVoList = fillinReq.getQuestionAnswerVoList();
 		// QuestionAnswerVoList 中非必填可能沒作答,因此 size 可能比 questionList 少
 		// 要知道每題是否必填及問題型態,才能拿填寫的答案比對 => 因此 questionList 要做比較的基底放在外層迴圈
 
@@ -415,7 +418,7 @@ public class QuizServiceImpl implements QuizService {
 			String type = question.getType();
 			boolean required = question.isRequired();
 			// 該題必填 => 檢查 QuestionAnswerVoList 中有沒有該筆存在
-			for (QuestionAnswerVo vo : QuestionAnswerVoList) {
+			for (QuestionIdAnswerVo vo : QuestionAnswerVoList) {
 				int voQuestionId = vo.getQuestionId();
 				// 該題必填但題目編號不包含在questionOdList => 回傳錯誤
 				if (required && !questionIdList.contains(voQuestionId)) {
@@ -442,5 +445,28 @@ public class QuizServiceImpl implements QuizService {
 
 		return null;
 	}
+
+	@Override
+	public FeedbakcUserRes feedbackUserList(int quizId) {
+		if(quizId <= 0) {
+			return new FeedbakcUserRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(), //
+					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
+		}
+		return new FeedbakcUserRes(ResCodeMessage.SUCCESS.getStatuscode(), //
+				ResCodeMessage.SUCCESS.getMassage(),quizId, fillinDao.selcetUserVoList(quizId));
+		
+		
+	}
+	
+	@Override
+	public FeedbackRes feedback(int quizId) {
+		if(quizId <= 0) {
+			return new FeedbackRes(ResCodeMessage.QUIZ_ID_ERROR.getStatuscode(), //
+					ResCodeMessage.QUIZ_ID_ERROR.getMassage());
+		}
+		return null;
+	}
+
+	
 
 }
