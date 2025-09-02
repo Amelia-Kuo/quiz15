@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +30,6 @@ import com.example.quiz15.vo.QuizCreateReq;
 import com.example.quiz15.vo.QuizUpdateReq;
 import com.example.quiz15.vo.SearchReq;
 import com.example.quiz15.vo.SearchRes;
-import com.example.quiz15.vo.UserVo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,6 +37,9 @@ import jakarta.transaction.Transactional;
 
 @Service
 public class QuizServiceImpl implements QuizService {
+	
+	// org.slf4j
+		private Logger logger = LoggerFactory.getLogger(getClass());
 
 	// 提供 類別(或 JSON 格式)與 物件 之間的轉換
 	private ObjectMapper mapper = new ObjectMapper();
@@ -100,6 +104,7 @@ public class QuizServiceImpl implements QuizService {
 					ResCodeMessage.SUCCESS.getStatuscode(), //
 					ResCodeMessage.SUCCESS.getMassage());
 		} catch (Exception e) {
+			logger.error(e.getMessage());
 			// 不能 return BasicRes 而是要將發生的異常拋出去，這樣 @Transaction 才會生效
 			throw e;
 		}
